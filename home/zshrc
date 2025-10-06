@@ -1,0 +1,110 @@
+# colored prompt and directory trimming
+autoload -U colors && colors
+PS1="%{$fg[green]%}[%T] %{$fg[blue]%}%(3~|%-1~/…/%1~|%~)%{$reset_color%} $ "
+
+# autopush directories to the stack for easier navigation
+setopt AUTO_PUSHD
+
+# enable some extra autocompletion (notably git)
+autoload -Uz compinit && compinit
+
+# set vi mode
+bindkey -v
+KEYTIMEOUT=1
+
+# fix backspace behavior after an `A`
+bindkey "^?" backward-delete-char
+
+# partial search
+bindkey -M vicmd "k" history-beginning-search-backward
+bindkey -M vicmd "j" history-beginning-search-forward
+
+# local search
+up-line-or-local-history() {
+    zle set-local-history 1
+    zle up-line-or-search
+    zle set-local-history 0
+}
+zle -N up-line-or-local-history
+
+down-line-or-local-history() {
+    zle set-local-history 1
+    zle down-line-or-search
+    zle set-local-history 0
+}
+zle -N down-line-or-local-history
+
+bindkey -M vicmd "˚" up-line-or-local-history
+bindkey -M vicmd "∆" down-line-or-local-history
+
+# Change cursor shape for different vi modes.
+function zle-keymap-select zle-line-init {
+    case $KEYMAP in
+        vicmd)      print -n -- '\033[2 q';;  # block
+        viins|main) print -n -- '\033[6 q';;  # line
+    esac
+    zle reset-prompt
+    zle -R
+}
+function zle-line-finish { print -n -- '\033[2 q' } # block
+
+zle -N zle-line-init
+zle -N zle-line-finish
+zle -N zle-keymap-select
+
+# history settings
+HISTSIZE=100000
+SAVEHIST=100000
+setopt SHARE_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_FIND_NO_DUPS
+setopt HIST_SAVE_NO_DUPS
+setopt HIST_REDUCE_BLANKS
+setopt INC_APPEND_HISTORY
+
+# disable window urgency
+printf "\e[?1042l"
+
+# yazi open and cd when exiting
+function yy() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}
+
+# aliases
+alias ll='ls -lah'
+alias grep='grep --color=auto'
+
+# go to root dir of a git repo
+alias cdg='cd $(git rev-parse --show-toplevel)'
+
+# pytest doesn't print warnings
+alias pytest='pytest --disable-warnings'
+
+# PSI uv for fast install
+alias puv='UV_INDEX="https://registry.psiquantum.com/artifactory/api/pypi/psipy/simple/" UV_PRERELEASE=if-necessary-or-explicit uv'
+
+# enable fzf
+export FZF_DEFAULT_OPTS="--height=20% --reverse"
+eval "$(fzf --zsh)"
+
+# enable zoxide
+eval "$(zoxide init zsh)"
+
+# >>> juliaup initialize >>>
+
+# !! Contents within this block are managed by juliaup !!
+
+path=('/Users/aolivo/.juliaup/bin' $path)
+export PATH
+
+# <<< juliaup initialize <<<
+
+. "$HOME/.local/bin/env"

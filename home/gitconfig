@@ -1,0 +1,11 @@
+[core]
+	pager = less -+$LESS -RSF
+[user]
+	name = Andrea Olivo
+	email = aolivo@psiquantum.com
+[pull]
+	rebase = true
+[push]
+	autoSetupRemote = 1
+[rerere]
+	enabled = true

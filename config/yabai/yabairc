@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+
+# global settings
+yabai -m config                                 \
+    mouse_follows_focus          on             \
+    focus_follows_mouse          autofocus      \
+    window_origin_display        default        \
+    window_placement             second_child   \
+    window_topmost               off            \
+    window_shadow                off            \
+    window_animation_duration    0.0            \
+    window_opacity_duration      0.0            \
+    active_window_opacity        1.0            \
+    normal_window_opacity        0.90           \
+    window_opacity               off            \
+    insert_feedback_color        0xffd75f5f     \
+    split_ratio                  0.50           \
+    split_type                   auto           \
+    auto_balance                 off            \
+    top_padding                  03             \
+    bottom_padding               03             \
+    left_padding                 03             \
+    right_padding                03             \
+    window_gap                   03             \
+    layout                       bsp            \
+    mouse_modifier               fn             \
+    mouse_action1                move           \
+    mouse_action2                resize         \
+    mouse_drop_action            swap
+
+# personal settings
+yabai -m rule --add app="(System Settings|Activity Monitor|System Information|AlDente|CrashPlan|OpenVPN Connect|NordVPN|OneDrive|Self Service|GlobalProtect|Calculator)" manage=off
+yabai -m rule --add app="^Finder$" title="(Copy|Connect|Move|Info|Pref)" manage=off
+yabai -m rule --add title="^Picture in Picture$" manage=off mouse_follows_focus=off
+yabai -m rule --add title="^MyTerm$" manage=off
+# yabai -m rule --add app="^zoom.us$" manage=off mouse_follows_focus=off
+
+# temporary fix
+# yabai -m signal --add app="^Google Chrome$" event=window_title_changed action="yabai -m config focus_follows_mouse autofocus"

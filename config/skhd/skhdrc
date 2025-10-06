@@ -1,0 +1,214 @@
+# ################################################################ #
+# THE FOLLOWING IS AN EXPLANATION OF THE GRAMMAR THAT SKHD PARSES. #
+# FOR SIMPLE EXAMPLE MAPPINGS LOOK FURTHER DOWN THIS FILE..        #
+# ################################################################ #
+
+# A list of all built-in modifier and literal keywords can
+# be found at https://github.com/koekeishiya/skhd/issues/1
+#
+# A hotkey is written according to the following rules:
+#
+#   hotkey       = <mode> '<' <action> | <action>
+#
+#   mode         = 'name of mode' | <mode> ',' <mode>
+#
+#   action       = <keysym> '[' <proc_map_lst> ']' | <keysym> '->' '[' <proc_map_lst> ']'
+#                  <keysym> ':' <command>          | <keysym> '->' ':' <command>
+#                  <keysym> ';' <mode>             | <keysym> '->' ';' <mode>
+#
+#   keysym       = <mod> '-' <key> | <key>
+#
+#   mod          = 'modifier keyword' | <mod> '+' <mod>
+#
+#   key          = <literal> | <keycode>
+#
+#   literal      = 'single letter or built-in keyword'
+#
+#   keycode      = 'apple keyboard kVK_<Key> values (0x3C)'
+#
+#   proc_map_lst = * <proc_map>
+#
+#   proc_map     = <string> ':' <command> | <string>     '~' |
+#                  '*'      ':' <command> | '*'          '~'
+#
+#   string       = '"' 'sequence of characters' '"'
+#
+#   command      = command is executed through '$SHELL -c' and
+#                  follows valid shell syntax. if the $SHELL environment
+#                  variable is not set, it will default to '/bin/bash'.
+#                  when bash is used, the ';' delimeter can be specified
+#                  to chain commands.
+#
+#                  to allow a command to extend into multiple lines,
+#                  prepend '\' at the end of the previous line.
+#
+#                  an EOL character signifies the end of the bind.
+#
+#   ->           = keypress is not consumed by skhd
+#
+#   *            = matches every application not specified in <proc_map_lst>
+#
+#   ~            = application is unbound and keypress is forwarded per usual, when specified in a <proc_map>
+#
+# A mode is declared according to the following rules:
+#
+#   mode_decl = '::' <name> '@' ':' <command> | '::' <name> ':' <command> |
+#               '::' <name> '@'               | '::' <name>
+#
+#   name      = desired name for this mode,
+#
+#   @         = capture keypresses regardless of being bound to an action
+#
+#   command   = command is executed through '$SHELL -c' and
+#               follows valid shell syntax. if the $SHELL environment
+#               variable is not set, it will default to '/bin/bash'.
+#               when bash is used, the ';' delimeter can be specified
+#               to chain commands.
+#
+#               to allow a command to extend into multiple lines,
+#               prepend '\' at the end of the previous line.
+#
+#               an EOL character signifies the end of the bind.
+
+# ############################################################### #
+# THE FOLLOWING SECTION CONTAIN SIMPLE MAPPINGS DEMONSTRATING HOW #
+# TO INTERACT WITH THE YABAI WM. THESE ARE SUPPOSED TO BE USED AS #
+# A REFERENCE ONLY, WHEN MAKING YOUR OWN CONFIGURATION..          #
+# ############################################################### #
+
+# disable annoying shortcuts
+cmd - q [
+    "Alacritty" : :
+]
+cmd - h : :
+
+# rctrl is the ctrl fired when pressing fn (enabled in sys.pref. -> keyboard)
+
+# quickly change Alacritty font size
+# NOTE: this might break in the future
+rctrl + lcmd - 0x18 [ # 0x18 -> '='
+    "Alacritty" : sed -i '' 's/size = .*$/size = 17.5/' ~/.config/alacritty/alacritty.toml
+    # "Alacritty" : alacritty msg config -w-1 font.size=17.5
+]
+rctrl + lcmd - 0x1B [ # 0x1B -> '-'
+    "Alacritty" : sed -i '' 's/size = .*$/size = 14.5/' ~/.config/alacritty/alacritty.toml
+    # "Alacritty" : alacritty msg config -w-1 font.size=14.5
+]
+
+# restart dock with long autohide delay
+rctrl + lcmd - d : defaults write com.apple.dock autohide-delay -float 10000; killall Dock
+
+# Launch apps
+rctrl + lcmd - t : alacritty msg create-window || open -Fb org.alacritty
+rctrl + lcmd - s : alacritty msg create-window -T MyTerm -o font.size=13 -e /usr/local/bin/btop || open -Fb org.alacritty --args -T MyTerm -o font.size=13 -e /usr/local/bin/btop
+rctrl + lcmd + lshift - s : alacritty msg create-window -T MyTerm -o font.size=13 -e sudo /usr/local/bin/btop || open -Fb org.alacritty --args -T MyTerm -o font.size=13 -e sudo /usr/local/bin/btop
+
+# load and unload globalprotect
+rctrl + lcmd - g : launchctl load /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*
+rctrl + lcmd + lalt - g : launchctl unload /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*
+
+# focus window, across monitor if needed
+rctrl + lcmd - h : yabai -m window --focus west || yabai -m display --focus west
+rctrl + lcmd - j : yabai -m window --focus south || yabai -m display --focus south
+rctrl + lcmd - k : yabai -m window --focus north || yabai -m display --focus north
+rctrl + lcmd - l : yabai -m window --focus east || yabai -m display --focus east
+
+# swap window
+lshift + rctrl + lcmd + lalt - h : yabai -m window --swap west
+lshift + rctrl + lcmd + lalt - j : yabai -m window --swap south
+lshift + rctrl + lcmd + lalt - k : yabai -m window --swap north
+lshift + rctrl + lcmd + lalt - l : yabai -m window --swap east
+
+# move window. Failing behavior is for moving floating windows
+lshift + rctrl + lcmd - h : yabai -m window --warp west  || yabai -m window --move rel:-150:0
+lshift + rctrl + lcmd - j : yabai -m window --warp south || yabai -m window --move rel:0:150
+lshift + rctrl + lcmd - k : yabai -m window --warp north || yabai -m window --move rel:0:-150
+lshift + rctrl + lcmd - l : yabai -m window --warp east  || yabai -m window --move rel:150:0
+
+# balance size of windows
+rctrl + lcmd + lalt - 0 : yabai -m space --balance
+
+# grow windows (suboptimal)
+# rctrl + lcmd + lalt - j : yabai -m window --ratio rel:.05
+# rctrl + lcmd + lalt - k : yabai -m window --ratio rel:-.05
+
+# resize windows (full?)
+rctrl + lcmd + lalt - j : yabai -m window --resize bottom:0:50 || yabai -m window --resize top:0:50
+rctrl + lcmd + lalt - k : yabai -m window --resize top:0:-50 || yabai -m window --resize bottom:0:-50
+rctrl + lcmd + lalt - h : yabai -m window --resize left:-50:0 || yabai -m window --resize right:-50:0
+rctrl + lcmd + lalt - l : yabai -m window --resize right:50:0 || yabai -m window --resize left:50:0
+
+# make floating window fill screen
+# shift + lalt - up     : yabai -m window --grid 1:1:0:0:1:1
+
+# make floating window fill left-half of screen
+# shift + lalt - left   : yabai -m window --grid 1:2:0:0:1:1
+
+# create desktop, move window and follow focus
+# lshift + rctrl + lcmd - n : yabai -m space --create && \
+#     index="$(yabai -m query --spaces --display | jq 'map(select(."native-fullscreen" == 0))[-1].index')" && \
+#     yabai -m window --space "${index}" && \
+#     yabai -m space --focus "${index}"
+
+# switch spaces without animation (stay on display, wrap around)
+# rctrl + lcmd - i : if [[ \
+#         $(yabai -m query --spaces --space | jq '.index' ) != \
+#         $(yabai -m query --displays --display | jq '.spaces[-1]') \
+#     ]]; then yabai -m space --focus next; \
+#         else yabai -m space --focus $(yabai -m query --displays --display | jq '.spaces[0]'); fi
+
+# rctrl + lcmd - u : if [[ \
+#         $(yabai -m query --spaces --space | jq '.index' ) != \
+#         $(yabai -m query --displays --display | jq '.spaces[0]') \
+#     ]]; then yabai -m space --focus prev; \
+#         else yabai -m space --focus $(yabai -m query --displays --display | jq '.spaces[-1]'); fi
+
+# Potentially faster ways to do the same
+# rctrl + lcmd - i : skhd -k "ctrl - $(yabai -m query --displays --display | jq ".spaces[($(yabai -m query --spaces --space).index - .spaces[0] + 1) % (.spaces | length)]")"
+# rctrl + lcmd - u : skhd -k "ctrl - $(yabai -m query --displays --display | jq ".spaces[($(yabai -m query --spaces --space).index - .spaces[0] - 1) % (.spaces | length)]")"
+
+# switch spaces NO SIP VERSION (stay on display, don't wrap around)
+# rctrl + lcmd - i : skhd -k "ctrl - right"
+# rctrl + lcmd - u : skhd -k "ctrl - left"
+
+# change space layout
+rctrl + lalt + lcmd - b : yabai -m space --layout bsp
+rctrl + lalt + lcmd - f : yabai -m space --layout float
+rctrl + lalt + lcmd - s : yabai -m space --layout stack
+
+# send window to desktop and follow focus
+# shift + cmd - z : yabai -m window --space next; yabai -m space --focus next
+# shift + cmd - 2 : yabai -m window --space  2; yabai -m space --focus 2
+
+# send window to monitor and follow focus
+# rctrl + cmd - c  : yabai -m window --display next; yabai -m display --focus next
+# rctrl + cmd - 1  : yabai -m window --display 1; yabai -m display --focus 1
+
+# move floating window
+# shift + rctrl - a : yabai -m window --move rel:-20:0
+# shift + rctrl - s : yabai -m window --move rel:0:20
+
+# set insertion point in focused container
+# rctrl + lalt - h : yabai -m window --insert west
+
+# toggle window zoom
+# lalt - d : yabai -m window --toggle zoom-parent
+rctrl + lalt + lcmd - z : yabai -m window --toggle zoom-fullscreen --focus
+
+# toggle window split type
+rctrl + lalt + lcmd - e : yabai -m window --toggle split
+
+# float / unfloat window and resize or center on screen
+rctrl + lcmd - f : yabai -m window --toggle float --grid 10:10:2:2:6:6 --focus
+
+# toggle topmost (o for "on top")
+# rctrl + lcmd - o : yabai -m window --toggle topmost
+
+# toggle sticky (a for "all desktops")
+# rctrl + lcmd - a : yabai -m window --toggle sticky
+
+# toggle sticky(+float), topmost, picture-in-picture
+# rctrl + lcmd - p : yabai -m window --toggle sticky; \
+#                    yabai -m window --toggle topmost; \
+#                    yabai -m window --toggle border; \
+#                    yabai -m window --toggle pip

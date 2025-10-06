@@ -1,0 +1,6 @@
+# raise open files limit
+ulimit -n 10240
+
+# add local PATH
+path=('/Users/aolivo/.cargo/bin' $path)
+export PATH

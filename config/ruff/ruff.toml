@@ -1,0 +1,11 @@
+extend-exclude = [
+    "__pycache__",
+]
+line-length = 120
+
+[lint]
+preview = true
+select = ["E", "F", "W", "PERF"]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
